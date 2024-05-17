@@ -1,0 +1,35 @@
+body {
+  background-color: #f5f5f5;
+}
+
+main {
+  background-color: #fff;
+  margin: 60px auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 1280px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.query-form .ant-alert {
+  margin-bottom: 20px;
+}
+
+.sparql-editor .cm-editor {
+  height: 300px;
+  border-radius: 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #d9d9d9;
+}
+
+.sparql-editor .cm-gutters {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.sparql-editor .cm-editor.cm-focused {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: none;
+}

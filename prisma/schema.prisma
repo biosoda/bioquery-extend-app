@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model data_source {
+  id    Int    @id(map: "pk_data_source") @default(autoincrement())
+  code  String @unique(map: "ak_data_source")
+  url   String
+  query String
+}
+
+model service {
+  id        Int    @id(map: "pk_service") @default(autoincrement())
+  name      String
+  url       String
+  query_url String
+}
+
+model template {
+  id                Int                @id(map: "pk_template") @default(autoincrement())
+  question          String
+  query             String
+  url               String
+  variables         Json?
+  author_name       String?
+  author_email      String?
+  category_id       Int?
+  template_category template_category? @relation(fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_template_category_id")
+}
+
+model template_category {
+  id                      Int                 @id(map: "pk_template_category") @default(autoincrement())
+  name                    String
+  parent_id               Int?
+  template                template[]
+  template_category       template_category?  @relation("template_categoryTotemplate_category", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_template_category_parent_id_1")
+  other_template_category template_category[] @relation("template_categoryTotemplate_category")
+}

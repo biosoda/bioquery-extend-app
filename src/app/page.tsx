@@ -1,95 +1,150 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
 
-export default function Home() {
+import React, { useState } from 'react';
+import { Form, Input, Button, Alert, Space, Divider, Row, Col } from 'antd';
+import CodeMirror from '@uiw/react-codemirror';
+import { langs } from '@uiw/codemirror-extensions-langs';
+
+const sampleData = {
+  serviceUrl: 'https://www.bgee.org/sparql',
+  question: 'List the labels and identifiers of $$fruitfly$$ genes in bgee',
+  query: `PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX orth: <http://purl.org/net/orth#>
+PREFIX obo: <http://purl.obolibrary.org/obo/>
+SELECT distinct ?gene_page ?geneName {
+	?gene a orth:Gene .
+	?gene rdfs:seeAlso ?gene_page .
+	?gene rdfs:label ?geneName .
+	?gene orth:organism ?taxon .
+	?taxon obo:RO_0002162 ?species .
+	?species up:commonName ?commonName .
+	FILTER (lcase(str(?commonName)) = lcase("$$fruitfly$$")) .
+}
+`,
+};
+
+const Home = () => {
+  const [form] = Form.useForm();
+  const [question, setQuestion] = useState('');
+  const [sparqlQuery, setSparqlQuery] = useState('');
+  const [serviceUrl, setServiceUrl] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [alert, setAlert] = useState({ type: '', message: '' });
+
+  const codeMirror = {
+    extensions: [langs.sparql()],
+    options: {
+      lineNumbers: true,
+    },
+  };
+
+  const tooltip = 'Define editable fields with double dollar sign enclosures, e.g. $$editable-field$$';
+
+  const handleSubmit = async () => {
+    if (!question || !sparqlQuery || !serviceUrl) {
+      setAlert({ type: 'error', message: 'Please fill in all mandatory fields.' });
+      return;
+    }
+
+    try {
+      let formContent = JSON.stringify({
+        question,
+        sparqlQuery,
+        serviceUrl,
+        name,
+        email,
+      });
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: formContent,
+      });
+
+      const result = await response.json();
+
+      if (result.error) {
+        setAlert({ type: 'error', message: 'An error has occured.' });
+      } else {
+        handleReset();
+        setAlert({ type: 'success', message: 'The question has been submitted.' });
+      }
+    } catch (error: any) {
+      setAlert({ type: 'error', message: error.message });
+    }
+  };
+
+  const handleReset = () => {
+    setQuestion('');
+    setSparqlQuery('');
+    setServiceUrl('');
+    setName('');
+    setEmail('');
+    setAlert({ type: '', message: '' });
+  };
+
+  const handlePrefill = () => {
+    setQuestion(sampleData.question);
+    setSparqlQuery(sampleData.query);
+    setServiceUrl(sampleData.serviceUrl);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <main>
+      <Form form={form} layout="vertical" requiredMark="optional" className="query-form" onFinish={handleSubmit}>
+        {alert.message && (
+          <Alert type={alert.type as 'error' | 'success' | 'info' | 'warning' | undefined} message={alert.message} />
+        )}
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Question" tooltip={tooltip} required>
+              <Input.TextArea
+                rows={5}
+                value={question}
+                style={{ resize: 'none' }}
+                onChange={(e) => setQuestion(e.target.value)}
+              />
+            </Form.Item>
+            <Form.Item label="SPARQL Query" tooltip={tooltip} required>
+              <CodeMirror
+                value={sparqlQuery}
+                basicSetup={codeMirror.options}
+                extensions={codeMirror.extensions}
+                className="sparql-editor"
+                onChange={(e) => setSparqlQuery(e)}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Service URL" required>
+              <Input value={serviceUrl} onChange={(e) => setServiceUrl(e.target.value)} />
+            </Form.Item>
+            <Form.Item label="Author Name">
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </Form.Item>
+            <Form.Item label="Author Email">
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+            </Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit">
+                  Submit
+                </Button>
+                <Button htmlType="button" onClick={handleReset}>
+                  Reset
+                </Button>
+                <Button htmlType="button" onClick={handlePrefill}>
+                  Prefill
+                </Button>
+              </Space>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
     </main>
   );
-}
+};
+
+export default Home;
