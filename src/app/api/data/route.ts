@@ -26,26 +26,26 @@ export async function GET(request: Request) {
   try {
     // Fetch all services
     const services = await prisma.$queryRaw`
-      SELECT id, name, url AS "moreinfo", query_url AS "urlquery"
+      SELECT 'S' || LPAD(id::text, 3, '0') as id, name, url AS "moreinfo", query_url AS "urlquery"
       FROM service
       ORDER BY id;`;
 
     // Fetch all template categories
     const template_categories = await prisma.$queryRaw`
-      SELECT id, name AS "title", parent_id AS "parentId"
+      SELECT 'C' || LPAD(id::text, 3, '0') as id, name AS "title", 'C' || LPAD(parent_id::text, 3, '0') AS "parentId"
       FROM template_category
       ORDER BY id;`;
 
     // Fetch all templates
     const templates = await prisma.$queryRaw`
-      SELECT id, question, query AS "SPARQL", url AS "fetchUrlShort",
-        COALESCE(variables, '[]'::jsonb) AS "vars", json_build_array(category_id) AS "parentIds"
+      SELECT 'Q' || LPAD(id::text, 3, '0') as id, question, query AS "SPARQL", url AS "fetchUrlShort",
+        COALESCE(variables, '[]'::jsonb) AS "vars", json_build_array('C' || LPAD(category_id::text, 3, '0')) AS "parentIds"
       FROM template
       ORDER BY id;`;
 
     // Fetch all data sources
     const data_sources = await prisma.$queryRaw`
-            SELECT id, code, url, query
+            SELECT 'D' || LPAD(id::text, 3, '0') as id, code, url, query
             FROM data_source
             ORDER BY id;`;
     const data_sources_obj: DataSourceObj = (data_sources as Array<DataSourcesArrayItem>).reduce(
