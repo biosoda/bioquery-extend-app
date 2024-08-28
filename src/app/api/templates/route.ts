@@ -12,6 +12,7 @@ const templateSchema = z.object({
   serviceUrl: z.string().url(),
   name: z.string().optional(),
   email: z.string().email().optional(),
+  category: z.number().optional(),
 });
 
 export async function POST(request: Request) {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
         url: parsedData.serviceUrl,
         author_name: parsedData.name,
         author_email: parsedData.email,
-        category_id: 26,
+        category_id: Number(parsedData.category),
       },
     });
     return NextResponse.json({ createdTemplate }, { status: 200 });
